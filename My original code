@@ -1,0 +1,69 @@
+  
+  ui
+  
+  #### My Original Layout ####
+  # Sidebar layout
+  # sidebarLayout(
+  #   sidebarPanel(width = 6,
+  #     
+  #     #Output: our interactive map
+  #     tmapOutput("map"),
+  #     
+  #     # Input: select burn status shown on map
+  #     checkboxGroupInput(
+  #       inputId = "burnstatus",
+  #       label = "Burn Severity",
+  #       # these names should match that in the dataset, if they didn't you would use 'choiceNames' and 'choiceValues' like we do for the next widget
+  #       choices = list("Partially Burned", "Burned", "Unburned"),
+  #       # selected = sets which are selected by default
+  #       selected = c("Partially Burned", "Burned", "Unburned")
+  #     ),
+  #   ),
+    
+    
+    #### MY Main panel for displaying output (our map) ####
+  #   mainPanel(# have date range slider & plots
+  #     width = 6,
+  #     
+  #     # Input: Filter by date range
+  #     sliderInput(inputId = "daterange",
+  #                 label  = "Select a date range",
+  #                 value = c(as.Date("2014-09-17"),
+  #                           as.Date("2022-11-30")),
+  #                 min = as.Date("2014-09-14"),
+  #                 max = as.Date("2022-11-30"),
+  #                 width = "100%"),
+  # 
+  #     #Input: Select a variable to plot
+  #     selectInput("compounds", "Choose a compound:",
+  #                 list(`NO3` = "NO3",
+  #                      `SO4` = "SO4",
+  #                      `PO4` = "PO4",
+  #                      `NH4` = "NH4")),
+  #     
+  #     #Output: Plots for selected variables
+  #     # plotOutput("compounds"),
+  #     # plotOutput(),
+  #     
+  # )
+  
+  
+  
+  
+  server
+  
+    # Render the map based on our reactive occurrence dataset
+  # output$map <- renderTmap({
+  #   tm_shape(chem_react()) +
+  #     tm_dots(
+  #       col = "status",
+  #       size = 0.1,
+  #       palette = "BrBG",
+  #       # want to find better color pallette
+  #       title = "Sites",
+  #       popup.vars = c(
+  #         "Burn Status" = "status",
+  #         "Date" = "newdate"
+  #       )
+  #     )
+  # })

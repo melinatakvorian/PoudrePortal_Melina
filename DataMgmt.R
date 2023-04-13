@@ -1,9 +1,6 @@
 #load in packages
 source("setup.R")
 
-tmap_mode("view")
-save(tidyResChem, file = "tidyResChem.RData")
-
 res_chem <- read.csv("prepped_reservoir_chemistry.csv")
 
 #### Map ####
@@ -17,8 +14,6 @@ spatialResChem <- st_as_sf(resChemNA,
                  coords = c("Long", "Lat"),
                  crs = 4326)
 
-qtm(spatialResChem)
-
 #### make the dates in the correct format, ####
 # first establish them as characters,
 spatialResChem$newdate <- 
@@ -30,7 +25,7 @@ spatialResChem$txtdate <- format(spatialResChem$newdate, "%Y-%m-%d")
 # now remove the unnecessary columns
 tidyResChem <- subset(spatialResChem, select = -c(Date, txtdate))
 
-
+save(tidyResChem, file = "data/tidyResChem.RData")
 
 
 
