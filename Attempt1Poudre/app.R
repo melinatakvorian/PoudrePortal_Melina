@@ -2,15 +2,20 @@
 library(shiny)
 
 #set up for the shiny app
-library(tmap)
-library(sf)
+library(bslib)
 library(dplyr)
 library(leaflet)
+library(plotly)
+library(readr)
+library(sf)
+library(shinyWidgets)
+library(stringr)
 
 load("tidyResChem.RData")
 
 tmap_mode("view")
 
+# ui -------------------------------
 ui <- fluidPage(
   # Application title
   titlePanel("Cameron Peak Burn Area - Upper Poudre Lake Chemistry"),
@@ -60,9 +65,6 @@ ui <- fluidPage(
     checkIcon = list(yes = icon("square-check"),
                      no = icon("square"))
   )
-  
-  
-  
   ),
 ),
 
@@ -209,7 +211,7 @@ column(
     br()
     
   ),
-),
+), )
 
 
 #### MY Main panel for displaying output (our map) ####
@@ -240,6 +242,9 @@ column(
 
 server <- function(input, output, session){
   
+  
+  pal <- colorFactor(palette = "Spectral", tidyResChem$status)
+  
   # Make a reactive object for the chem data by calling inputIDs to extract the values the user chose
   chem_react <- reactive(
     tidyResChem %>%
@@ -266,6 +271,7 @@ server <- function(input, output, session){
   #     )
   # })
   
+#### Caitlin Building the Map ####
   output$map <- leaflet::renderLeaflet({
     #what does leaflet() do?
     leaflet() %>%
@@ -354,17 +360,124 @@ server <- function(input, output, session){
   })
 
   final_df <- reactive({
-    # NEED TO RENAME THESE VARIABLES
     combined() %>% rename(
-      streamflow = input$streamVar,
-      quality = input$qual,
-      precip = input$precipVar,
-      temp = input$tempVar
+      select3Choice = input$select3Var, #streamflow = streamVar
+      select4Choice = input$select4Var, #quality = qual
+      select1Choice = input$select1Var, #precip = precipVar
+      select2Choice = input$select2Var #temp = tempVar
     ) %>%
       filter(newdate >= input$daterange[1] &
                newdate <= input$daterange[2]) %>%
       
       arrange(newdate)
+    
+  })
+  
+#### Caitlin Make Plots ####
+  ##### Select 1 #####
+  output$select1 <- renderPlotly({
+    
+    
+    if(nrow(combined()) == 0)
+      return(NULL)
+    
+    if(input$select1Var == "Turbidity"){
+      
+      plotly::plot_ly() %>%
+        add_bars(x = final_df()$newdate, y = final_df()$select1Choice, name = ~ final_df()$Site,
+                 color = ~ final_df()$Site) %>%
+        plotly::layout(yaxis = list(title = "Turbidity (NTU)", autorange = "reversed"),
+                       xaxis = list(range = c(input$range[1], input$range[2]),
+                                    showgrid = TRUE),
+                       showlegend = TRUE,
+                       legend = list(orientation = "h", x = 0.01, y = 1.4))
+    }else {
+      
+      plot_ly(final_df()) %>%
+        add_trace(x = final_df()$newdate,
+                  y = final_df()$select1Choice,
+                  name = ~ final_df()$Site,
+                  linetype = ~ final_df()$Site,
+                  mode = "lines+markers") %>%
+        plotly::layout(yaxis = list(title = paste(input$select1Var, "(mg/L)"), range = list(0, max(final_df()$select1Choice))),
+                       xaxis = list(range = c(input$range[1], input$range[2]),
+                                    showgrid = T),
+                       showlegend = TRUE,
+                       legend = list(orientation = "h", x = 0.01, y = 1.2))
+      
+      
+    }
+    }
+    )
+  
+  ##### Select 2 ####
+  output$select2 <- renderPlotly({
+    
+    if(nrow(combined()) == 0)
+      return(NULL)
+    
+    plot_ly(final_df()) %>%
+      add_trace(x = final_df()$Date,
+                y = final_df()$select2Choice,
+                name = ~ final_df()$Site,
+                linetype = ~ final_df()$Site,
+                mode = "lines+markers") %>%
+      plotly::layout(yaxis = list(title = paste(input$select2Var), range = list(0, max(final_df()$select2Choice))),
+                     xaxis = list(range = c(input$range[1], input$range[2]),
+                                  showgrid = T),
+                     showlegend = TRUE,
+                     legend = list(orientation = "h", x = 0.01, y = 1.2))
+  })
+  
+  ##### Select 3 ####
+  output$select3 <- renderPlotly({
+    
+    
+    if(nrow(combined()) == 0)
+      return(NULL)
+    
+    
+    plot_ly(final_df()) %>%
+      add_trace(x = final_df()$Date,
+                y = final_df()$select3Choice,
+                name = ~final_df()$Site,
+                linetype = ~ final_df()$Site,
+                mode = "lines+markers") %>%
+      plotly::layout(yaxis = list(title = input$select3Var),
+                     xaxis = list(range = c(input$range[1], input$range[2]),
+                                  showgrid = T),
+                     showlegend = TRUE,
+                     legend = list(orientation = "h", x = 0.01, y = 1.2))
+  })
+  
+  ##### Select 4 ####
+  output$select4 <- renderPlotly({
+    
+    if(nrow(combined()) == 0)
+      return(NULL)
+    
+    if(!(input$select4Var %in% names(combined())))
+      return(NULL)
+    
+    plotly::plot_ly(final_df()) %>%
+      add_trace(x = final_df()$Date,
+                y = final_df()$select4Choice,
+                name = ~final_df()$Site,
+                mode = 'lines+markers',
+                linetype = ~ final_df()$Site,
+                connectgaps = TRUE) %>%
+      plotly::layout(yaxis = list(title = input$select4Var),
+                     xaxis = list(range = c(input$range[1], input$range[2]),
+                                  showgrid = T),
+                     showlegend = TRUE,
+                     legend = list(orientation = "h", 
+                                   x = 0.01, y = 1.2))
+  })
+  
+  observeEvent(input$clear, {
+    combined(data.frame())
+    
+    tableProxy %>% DT::selectRows(NULL)
     
   })
   
