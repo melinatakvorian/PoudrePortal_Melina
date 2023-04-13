@@ -213,7 +213,7 @@ ui <- fluidPage(
   ) 
 )
 
-
+# server ----------
 server <- function(input, output, session){
   
   
@@ -250,18 +250,21 @@ server <- function(input, output, session){
         ),
         layers = "0"
       ) %>% 
-      addMapPane("fire", zIndex = 410) %>%
-      addPolygons(
-        data = camPeak_simple,
-        color = NA,
-        weight = 1,
-        smoothFactor = 0.5,
-        opacity = 1.0,
-        fillOpacity = 0.9,
-        fillColor = ~ colorFactor("Reds", Severity)(Severity),
-        group = "Cameron Peak Fire",
-        options = pathOptions(pane = "fire")
-      ) %>%
+      # addMapPane("fire", zIndex = 410) %>%
+      
+      # don't have layer files to make Cameron Peak map
+      
+      # addPolygons(
+      #   data = camPeak_simple,
+      #   color = NA,
+      #   weight = 1,
+      #   smoothFactor = 0.5,
+      #   opacity = 1.0,
+      #   fillOpacity = 0.9,
+      #   fillColor = ~ colorFactor("Reds", Severity)(Severity),
+      #   group = "Cameron Peak Fire",
+      #   options = pathOptions(pane = "fire")
+      # ) %>%
       
       addLegend("topright", data = tidyResChem, values = ~status, 
                 pal = pal, title = "Burn Status") %>% 
@@ -270,13 +273,14 @@ server <- function(input, output, session){
       
       addLayersControl(
         baseGroups = c("USGS Topo", "Open Street Map", "Satellite"),
-        overlayGroups = "Cameron Peak Fire",
+        # overlayGroups = "Cameron Peak Fire",
         position = "topleft",
         options = layersControlOptions(collapsed = TRUE)
-      ) %>%
-      hideGroup(c("Cameron Peak Fire"))
+      )
+      # hideGroup(c("Cameron Peak Fire"))
     
-    output$table <- DT::renderDataTable(Site, rownames = FALSE,
+    #### Caitlin Table Tab ####
+    output$table <- DT::renderDataTable(sites, rownames = FALSE,
                                         options = list(autoWidth = TRUE, scrollX = TRUE,
                                                        scrollY = "200px", scrollCollapse = TRUE,
                                                        paging = FALSE, float = "left"),
@@ -331,7 +335,7 @@ server <- function(input, output, session){
     
   })
   
-#### Caitlin Make Plots ####
+  #### Caitlin Make Plots ####
   ##### Select 1 #####
   output$select1 <- renderPlotly({
     
