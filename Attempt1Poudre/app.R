@@ -13,7 +13,8 @@ library(stringr)
 
 #Warning in readChar(con, 5L, useBytes = TRUE) :
 #cannot open compressed file 'tidyResChem.RData', probable reason 'No such file or directory'
-load("data/tidyResChem.RData")
+chem_data <- load("data/tidyResChem.RDS")
+sites <- load("data/sites_table.RDS")
 
 tmap_mode("view")
 
@@ -72,11 +73,11 @@ ui <- fluidPage(
     ),
   ),
   
-  ####plots setup!!####
+  #plots setup--------
   column(
     7,
     fluidRow(
-      # Input: Filter by date range
+      ## Input: Filter by date range --------
       sliderInput(
         inputId = "daterange",
         label = "",
@@ -87,7 +88,7 @@ ui <- fluidPage(
         width = "100%"
       ),
       
-      # Input: Select variable to plot
+      ## Input: Select variable to plot ----------
       selectInput(
         inputId = "select1Var", #precipVar
         label = "Selection 1",
@@ -112,11 +113,11 @@ ui <- fluidPage(
           "SO4"
         ),
       ),
-      #Output: plot variable selected
+      ## Output: plot variable selected ------------
       plotlyOutput("select1", width = "100%", height = 160),
       
       
-      #Input: select 2nd variable to plot
+      ## Input: select 2nd variable to plot --------
       selectInput(
         inputId = "select2Var",
         #tempVar
@@ -142,10 +143,10 @@ ui <- fluidPage(
           "SO4"
         )
       ),
-      #Output: plot 2nd variable selected
+      ## Output: plot 2nd variable selected---------
       plotlyOutput("select2", width = "100%", height = 190),
       
-      #Input: select 3rd variable
+      ##Input: select 3rd variable----------
       selectInput(
         inputId = "select3Var",
         #streamVar
@@ -171,11 +172,11 @@ ui <- fluidPage(
           "SO4"
         )
       ),
-      #Output: plot 3rd variable
+      ##Output: plot 3rd variable --------
       plotlyOutput("select3", width = "100%", height = 190),
       
       
-      #Input: select 4th variable to plot
+      ##Input: select 4th variable to plot ---------
       selectInput(
         inputId = "select4Var",
         #qual
@@ -201,7 +202,7 @@ ui <- fluidPage(
           "SO4"
         ),
       ),
-      #Output: plot 4th variable
+      ##Output: plot 4th variable-----
       plotlyOutput("select4", width = "100%", height = 190),
       
       
@@ -216,12 +217,23 @@ ui <- fluidPage(
 # server ----------
 server <- function(input, output, session){
   
+  #see what happens when this and tab1 are commented out
+  # chem_data_filtered <- reactive({
+  #   
+  #   if(is.null(input$varChoice))
+  #     return(chem_data %>% filter(is.na(data_available)))
+  #   
+  #   
+  #   # chem_data %>% filter(chem_data %in% input$varChoice) %>% 
+  #   #   filter(str_detect(data_available, paste(input$varChoice, collapse = "|")))
+  # })
   
-  pal <- colorFactor(palette = "Spectral", tidyResChem$status)
+  pal <- colorNumeric(palette = c("#04e9e7","#d40000","#fdf802"),
+                                  domain = c(0,100))
   
   # Make a reactive object for the chem data by calling inputIDs to extract the values the user chose
   chem_react <- reactive(
-    tidyResChem %>%
+    chem_data %>%
       filter(status %in% input$burnstatus) %>%
       filter(newdate >= input$daterange[1] &
                newdate <= input$daterange[2])
@@ -230,8 +242,8 @@ server <- function(input, output, session){
   
   
 #### Caitlin Building the Map ####
+  
   output$map <- leaflet::renderLeaflet({
-    #what does leaflet() do?
     leaflet() %>%
       addTiles(group = "Open Street Map") %>%
       addProviderTiles("Esri.WorldImagery", layerId = "C", group = "Satellite") %>%
@@ -250,34 +262,21 @@ server <- function(input, output, session){
         ),
         layers = "0"
       ) %>% 
-      # addMapPane("fire", zIndex = 410) %>%
       
       # don't have layer files to make Cameron Peak map
       
-      # addPolygons(
-      #   data = camPeak_simple,
-      #   color = NA,
-      #   weight = 1,
-      #   smoothFactor = 0.5,
-      #   opacity = 1.0,
-      #   fillOpacity = 0.9,
-      #   fillColor = ~ colorFactor("Reds", Severity)(Severity),
-      #   group = "Cameron Peak Fire",
-      #   options = pathOptions(pane = "fire")
-      # ) %>%
-      
-      addLegend("topright", data = tidyResChem, values = ~status, 
-                pal = pal, title = "Burn Status") %>% 
-      
       addScaleBar(position = "bottomright") %>%
+      
+      addLegend("topright", data = chem_data, values = ~status, 
+                pal = pal, title = "Burn Status") %>% 
       
       addLayersControl(
         baseGroups = c("USGS Topo", "Open Street Map", "Satellite"),
-        # overlayGroups = "Cameron Peak Fire",
+        overlayGroups = "Burn Status",
         position = "topleft",
         options = layersControlOptions(collapsed = TRUE)
       )
-      # hideGroup(c("Cameron Peak Fire"))
+  })
     
     #### Caitlin Table Tab ####
     output$table <- DT::renderDataTable(sites, rownames = FALSE,
@@ -289,11 +288,38 @@ server <- function(input, output, session){
     
     tableProxy <- DT::dataTableProxy("table")
     
-    
-  })
+  #   observe({
+  # 
+  #     input$nav
+  # 
+  # 
+  #     #### Caitlin - don't think I need this ####
+  #     tab1 <- leafletProxy("map") %>%
+  #       addCircleMarkers(
+  #         data = chem_data_filtered(),
+  #         layerId = ~ Site,
+  #         lng = ~ Long,
+  #         lat = ~ Lat,
+  #         radius = 6,
+  #         color = "black",
+  #         fillColor = "gray90",
+  #         stroke = TRUE,
+  #         weight = 1,
+  #         fillOpacity = 1,
+  #         popup = paste(
+  #           "Burn Status:",
+  #           chem_data_filtered()$status
+  #         ),
+  # 
+  #         options = pathOptions(pane = "chem")
+  #       )
+  # 
+  # })
   
-  #MAKE PLOTS
-  df <- reactiveVal(tidyResChem %>% mutate(key = 1:nrow(.)))
+
+  #this is throwing an error, trying without the mutate
+  #df <- reactiveVal(chem_data %>% mutate(key = 1:nrow(.)))
+  df <- reactiveVal(chem_data)
   combined <- reactiveVal(data.frame())
   
   
@@ -302,12 +328,12 @@ server <- function(input, output, session){
     
   })
   
-  observeEvent(input$map1_marker_click, {
+  observeEvent(input$map_marker_click, {
     
     combined(
       bind_rows(combined(),
                 df() %>%
-                  filter(Site %in% input$map1_marker_click)) 
+                  filter(Site %in% input$map_marker_click)) 
       
     )
   })
@@ -332,10 +358,9 @@ server <- function(input, output, session){
                newdate <= input$daterange[2]) %>%
       
       arrange(newdate)
-    
-  })
+    })
   
-  #### Caitlin Make Plots ####
+  # Caitlin Make Plots -------
   ##### Select 1 #####
   output$select1 <- renderPlotly({
     
@@ -443,7 +468,7 @@ server <- function(input, output, session){
     
   })
   
-}
+  }
 
-# Run the application 
+# Run the application --------
 shinyApp(ui = ui, server = server)

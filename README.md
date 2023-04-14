@@ -18,3 +18,7 @@
     
     FOUND IT!? I think I need to create that table with the unique site info and then load it in to be able to refer to 'sites'
     sites <- readRDS("data/sites_table.RDS")
+    I realized that she renamed her other main table, so I have renamed that to chem_data and went through and corrected it
+    
+4/14 in the am
+  Getting an error somewhere in the map building process, I think before addLayersControl

@@ -809,7 +809,7 @@ server <-  function(input, output, session){
                 title = "Radar Base Reflectivity (dBZ)",
                 position = "bottomright", group = "Radar Legend") %>% 
       addLegend("topright", data = water_data, values = ~source, 
-                pal = pal, title = "Data source") %>% 
+                pal, title = "Data source") %>% 
       
       addLayersControl(
         baseGroups = c("USGS Topo", "Open Street Map", "Satellite"),
