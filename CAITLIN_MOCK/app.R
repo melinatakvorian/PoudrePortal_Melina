@@ -317,7 +317,7 @@ ui <- fluidPage (
 
 
 
-
+# server ---------------------
 server <-  function(input, output, session){
   
   #update tabPanels from homepage buttons

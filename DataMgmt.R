@@ -26,10 +26,7 @@ tidyResChem <- subset(spatialResChem, select = -c(Date, txtdate, newdate))
 
 latLong <- select(resChemNA, Site, Lat, Long)
 
-tidyResChem <- left_join(tidyResChem, latLong, by = "Site")
-
-save(tidyResChem, file = "data/tidyResChem.RDS")
-
+tidyResChemMerge <- left_join(tidyResChem, latLong, multiple = "first")
 
 
 
@@ -45,15 +42,22 @@ data_avail_chem <- resChemNA %>% group_by(Site) %>%
 
 
 sites_table <- 
-  resChemNA %>%
+  tidyResChemMerge %>%
   group_by(Site) %>%
-  mutate(start_date = min(Date),
-         end_date = max(Date)) %>%
+  mutate(start_date = min(dates),
+         end_date = max(dates)) %>% 
   ungroup() %>%
-  distinct(Site, .keep_all = TRUE) %>% 
+  distinct(Site, .keep_all = TRUE) %>%
   dplyr::select(Site, Long, Lat, start_date, end_date) %>%
   left_join(data_avail_chem, by = "Site")
 
+## save as RDS ----------
+saveRDS(sites_table, file = "data/sites_table.RDS")
 
-save(sites_table, file = "data/sites_table.RDS")
+# adding data_available column to tidyResChem
+tidyResChemMerge <- tidyResChemMerge %>% 
+  left_join(data_avail_chem, by = "Site")
 
+
+## save as RDS -------
+saveRDS(tidyResChemMerge, file = "data/tidyResChem.RDS")
