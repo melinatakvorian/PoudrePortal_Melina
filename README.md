@@ -42,3 +42,9 @@ The page is loading with a blank map, the columns are correct, the Table Tab loo
   I just noticed that the start and end dates are not correct... some start dates are after the end dates fixed it!
   
   Went through and corrected some smaller things, still getting no points on the map and a table with the same errors as before
+  
+4/17 in the am/pm
+  I tried to map the points with tmap, and they were successfully plotted by the reactivity was not working correctly.
+  
+  The map sites show up!!! But the selections don't do anything, and clicking on the site doesn't work
+  I just realized that the selections for the map will not work because they contradict each other

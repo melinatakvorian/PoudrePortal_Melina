@@ -30,7 +30,7 @@ ui <- fluidPage(fluidRow(
       "In this app you can filter occurrences by burn status and date range,
     You can also click on individual occurrences to view metadata."
     ),
-    #### Caitlin Layout ####
+    #### Layout ####
     tabsetPanel(
       tabPanel(
         "Map",
@@ -163,15 +163,26 @@ ui <- fluidPage(fluidRow(
 # server ----------
 server <- function(input, output, session){
   
-  #not sure how to mimic this for me
+# question for Caitlin (I think this is the problem) -----
+  
+  #commented out and trying the simple version
+  #not sure how to mimic this for me bc these vals cross over
+  # chem_data_filtered <- reactive({
+  # 
+  #   if(is.null(input$burnStatus))
+  #     return(chem_data %>% filter(is.na(data_available)))
+  # 
+  #   chem_data %>% filter(Campaign %in% input$campaignChoice) %>%
+  #   filter(str_detect(data_available, paste(input$burnStatus, collapse = "|")))
+  # })
+  
   chem_data_filtered <- reactive({
-
-    if(is.null(input$burnStatus))
-      return(chem_data %>% filter(is.na(data_available)))
-
-    chem_data %>% filter(Campaign %in% input$campaignChoice) %>%
-    filter(str_detect(data_available, paste(input$burnStatus, collapse = "|")))
+    
+    
+    chem_data %>% filter(status %in% input$burnStatus)
+    
   })
+  
   
   pal <- colorFactor(palette = c("#04e9e7","#d40000","#fdf802"), 
                     chem_data$status)
@@ -179,9 +190,11 @@ server <- function(input, output, session){
   pal_campaign <- colorFactor(palette = c("#6eaab5", "#6e6eb5", "#996eb5", "#b16eb5"), 
                               chem_data$Campaign)
 #### Building the Map ####
+  #Render the map based on our reactive occurrence dataset
   
   output$map <- leaflet::renderLeaflet({
     leaflet() %>%
+      setView(lng = -105.5440, lat = 40.62055, zoom = 09) %>%
       addTiles(group = "Open Street Map") %>%
       addProviderTiles("Esri.WorldImagery", layerId = "C", group = "Satellite") %>%
       addWMSTiles(
@@ -198,19 +211,20 @@ server <- function(input, output, session){
           "Policies</a>"
         ),
         layers = "0"
-      ) %>% 
+      ) %>%
       addMapPane("burn", zIndex = 410) %>%
-      
+
       # don't have layer files to make Cameron Peak map
-      
-      addLegend("topright", data = chem_data, values = ~Campaign, 
-                pal = pal_campaign, title = "Campaign") %>% 
-      
-      addLegend("topright", data = chem_data, values = ~status, 
-                pal = pal, title = "Burn Status") %>% 
-      
+# question for Caitlin: how to zoom to extent? ----------
+
+      addLegend("topright", data = chem_data, values = ~Campaign,
+                pal = pal_campaign, title = "Campaign") %>%
+
+      addLegend("topright", data = chem_data, values = ~status,
+                pal = pal, title = "Burn Status") %>%
+
       addScaleBar(position = "bottomright") %>%
-      
+
       addLayersControl(
         baseGroups = c("USGS Topo", "Open Street Map", "Satellite"),
         # do i need? ->
@@ -220,7 +234,7 @@ server <- function(input, output, session){
       )
   })
     
-    #### Caitlin Table Tab ####
+    #### Table Tab ####
     output$table <- DT::renderDataTable(sites, rownames = FALSE,
                                         options = list(autoWidth = TRUE, scrollX = TRUE,
                                                        scrollY = "200px", scrollCollapse = TRUE,
@@ -234,12 +248,12 @@ server <- function(input, output, session){
 
       input$nav
 
-
+# formatting map ------
       #### Caitlin - don't think I need this ####
       tab <- leafletProxy("map") %>%
-        clearMarkers() %>% 
+        clearMarkers() %>%
         addCircleMarkers(
-          data = chem_data_filtered(),
+          data = chem_data_filtered(), #instead of chem_data_filtered()
           layerId = ~ Site,
           lng = ~ Long,
           lat = ~ Lat,
@@ -251,10 +265,10 @@ server <- function(input, output, session){
           fillOpacity = 1,
           popup = paste(
             "Burn Status:",
-            chem_data_filtered()$status,
+            chem_data_filtered()$status, #testing
             "<br>",
             "Site:",
-            chem_data_filtered()$Site
+            chem_data_filtered()$Site #testing
           ),
 
           options = pathOptions(pane = "burn")
@@ -307,7 +321,7 @@ server <- function(input, output, session){
       arrange(dates)
     })
   
-  # Caitlin Make Plots -------
+  # Plots -------
   # Question for Caitlin - which structure to use? ---------
   ##### Select 1 #####
   output$select1 <- renderPlotly({
