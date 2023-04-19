@@ -48,3 +48,6 @@ The page is loading with a blank map, the columns are correct, the Table Tab loo
   
   The map sites show up!!! But the selections don't do anything, and clicking on the site doesn't work
   I just realized that the selections for the map will not work because they contradict each other
+  
+4/18 
+  I am now trying to see how I can adapt the code to not have the Campaigns included and see if the table or map will work - did not work

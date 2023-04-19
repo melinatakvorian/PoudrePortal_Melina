@@ -1,0 +1,14 @@
+name: PoudreWQ
+title: PoudreWQ
+username:
+account: melinatak
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8899027
+bundleId: 7110879
+url: https://melinatak.shinyapps.io/PoudreWQ/
+when: 1681933394.59906
+lastSyncTime: 1681933394.59907
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: CAITLIN_MOCK/app.R|data/prepped_reservoir_chemistry.csv|data/Units_Cam_Peak.csv|DataMgmt.R|My original code|README.md|setup.R

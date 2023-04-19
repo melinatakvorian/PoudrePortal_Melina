@@ -10,6 +10,7 @@ library(readr)
 library(sf)
 library(shinyWidgets)
 library(stringr)
+# options(warn = 1)
 
 chem_data <- readRDS("data/tidyResChem.RDS")
 sites <- readRDS("data/sites_table.RDS")
@@ -19,11 +20,14 @@ chem_vals <-  c("Turbidity", "TSS", "ChlA", "DOC", "DTN", "pH",
   "Cl", "NO3", "PO4", "SO4")
 
 # ui -------------------------------
-ui <- fluidPage(fluidRow(
+ui <- fluidPage(
+  #insert theme here
+  
+  fluidRow(
   column(
     5,
     # Application title
-    titlePanel("Cameron Peak Burn Area - Upper Poudre Lake Chemistry"),
+    titlePanel("Cameron Peak Burn Area - Poudre Lake Chemistry"),
     
     # Add some informational text using and HTML tag (i.e., a level 5 heading)
     h5(
@@ -54,30 +58,29 @@ ui <- fluidPage(fluidRow(
     br(),
     
     # Input: select Campaign shown on map
-    pickerInput(
-      "campaignChoice", #sourceChoice
-      "Filter by Campaign:",
-      choices = c(
-        "Mainstem",
-        "South Fork",
-        "Chambers Complex",
-        "Longdraw",
-        "Tributary"
-      ),
-      selected = c(
-        "Mainstem",
-        "South Fork",
-        "Chambers Complex",
-        "Longdraw",
-        "Tributary"
-      ),
-      multiple = TRUE
-    ),
+    # pickerInput(
+    #   "campaignChoice", #sourceChoice
+    #   "Filter by Campaign:",
+    #   choices = c(
+    #     "Mainstem",
+    #     "South Fork",
+    #     "Chambers Complex",
+    #     "Longdraw",
+    #     "Tributary"
+    #   ),
+    #   selected = c(
+    #     "Mainstem",
+    #     "South Fork",
+    #     "Chambers Complex",
+    #     "Longdraw",
+    #     "Tributary"
+    #   ),
+    #   multiple = TRUE
+    # ),
     
     # Input: select burn status shown on map
     checkboxGroupButtons(
-      inputId = "burnStatus",
-      #varChoice
+      inputId = "burnStatus",#varChoice
       label = "Filter by Category:",
       choices = c("Partially Burned",
                   "Burned",
@@ -112,8 +115,7 @@ ui <- fluidPage(fluidRow(
                 
                 ## Input: Select variable to plot ----------
                 selectInput(
-                  inputId = "select1Var",
-                  #precipVar
+                  inputId = "select1Var", #precipVar
                   label = "Selection 1",
                   choices = all_of(chem_vals)
                 ),
@@ -123,8 +125,7 @@ ui <- fluidPage(fluidRow(
                 
                 ## Input: select 2nd variable to plot --------
                 selectInput(
-                  inputId = "select2Var",
-                  #tempVar
+                  inputId = "select2Var", #tempVar
                   label = "Selection 2",
                   choices = all_of(chem_vals)
                 ),
@@ -133,8 +134,7 @@ ui <- fluidPage(fluidRow(
                 
                 ##Input: select 3rd variable----------
                 selectInput(
-                  inputId = "select3Var",
-                  #streamVar
+                  inputId = "select3Var", #streamVar
                   label = "Selection 3",
                   choices = all_of(chem_vals)
                 ),
@@ -144,8 +144,7 @@ ui <- fluidPage(fluidRow(
                 
                 ##Input: select 4th variable to plot ---------
                 selectInput(
-                  inputId = "select4Var",
-                  #qual
+                  inputId = "select4Var", #qual
                   label = "Selection 4",
                   choices = all_of(chem_vals)
                 ),
@@ -163,38 +162,27 @@ ui <- fluidPage(fluidRow(
 # server ----------
 server <- function(input, output, session){
   
-# question for Caitlin (I think this is the problem) -----
-  
-  #commented out and trying the simple version
-  #not sure how to mimic this for me bc these vals cross over
-  # chem_data_filtered <- reactive({
-  # 
-  #   if(is.null(input$burnStatus))
-  #     return(chem_data %>% filter(is.na(data_available)))
-  # 
-  #   chem_data %>% filter(Campaign %in% input$campaignChoice) %>%
-  #   filter(str_detect(data_available, paste(input$burnStatus, collapse = "|")))
-  # })
-  
   chem_data_filtered <- reactive({
     
-    
     chem_data %>% filter(status %in% input$burnStatus)
+    # %>% filter(Campaign %in% input$campaignChoice)
     
   })
   
   
-  pal <- colorFactor(palette = c("#04e9e7","#d40000","#fdf802"), 
+  pal <- colorFactor(palette = c("#D55E00", "#F0E442", "#009E73"), 
                     chem_data$status)
   
-  pal_campaign <- colorFactor(palette = c("#6eaab5", "#6e6eb5", "#996eb5", "#b16eb5"), 
-                              chem_data$Campaign)
+  # pal_campaign <- colorFactor(palette = c("#6eaab5", "#6e6eb5", "#996eb5", "#b16eb5"), 
+  #                             chem_data$Campaign)
 #### Building the Map ####
   #Render the map based on our reactive occurrence dataset
   
   output$map <- leaflet::renderLeaflet({
     leaflet() %>%
-      setView(lng = -105.5440, lat = 40.62055, zoom = 09) %>%
+      setView(lng = -105.5440,
+              lat = 40.62055,
+              zoom = 09) %>%
       addTiles(group = "Open Street Map") %>%
       addProviderTiles("Esri.WorldImagery", layerId = "C", group = "Satellite") %>%
       addWMSTiles(
@@ -212,23 +200,45 @@ server <- function(input, output, session){
         ),
         layers = "0"
       ) %>%
-      addMapPane("burn", zIndex = 410) %>%
-
+      
       # don't have layer files to make Cameron Peak map
-# question for Caitlin: how to zoom to extent? ----------
-
-      addLegend("topright", data = chem_data, values = ~Campaign,
-                pal = pal_campaign, title = "Campaign") %>%
-
-      addLegend("topright", data = chem_data, values = ~status,
-                pal = pal, title = "Burn Status") %>%
-
+      
+       addCircleMarkers(
+        #use reactive chem_data_filtered()
+        data = chem_data_filtered(),
+        layerId = ~ Site,
+        lng = ~ Long,
+        lat = ~ Lat,
+        radius = 6,
+        color = "black",
+        fillColor = ~ pal(status),
+        stroke = TRUE,
+        weight = 1,
+        fillOpacity = 0.85,
+        popup = paste(
+          "Burn Status:",
+          chem_data$status,
+          "<br>",
+          "Site:",
+          chem_data$Site
+        ),
+        group = "Burn Status"
+      ) %>%
+      
+      addLegend(
+        "topright",
+        data = chem_data,
+        values = ~ status,
+        pal = pal,
+        title = "Burn Status",
+        group = "Burn Status"
+      ) %>%
+      
       addScaleBar(position = "bottomright") %>%
-
+      
       addLayersControl(
         baseGroups = c("USGS Topo", "Open Street Map", "Satellite"),
-        # do i need? ->
-        # overlayGroups = "Burn Status", "Campaign",
+        overlayGroups = "Burn Status",
         position = "topleft",
         options = layersControlOptions(collapsed = TRUE)
       )
@@ -244,68 +254,70 @@ server <- function(input, output, session){
     
     tableProxy <- DT::dataTableProxy("table")
     
-    observe({
+     observe({
+ 
+# # formatting map ------
 
-      input$nav
-
-# formatting map ------
-      #### Caitlin - don't think I need this ####
-      tab <- leafletProxy("map") %>%
+      leafletProxy("map") %>%
         clearMarkers() %>%
         addCircleMarkers(
-          data = chem_data_filtered(), #instead of chem_data_filtered()
+          data = chem_data_filtered(),
           layerId = ~ Site,
           lng = ~ Long,
           lat = ~ Lat,
-          radius = 8,
+          radius = 6,
           color = "black",
           fillColor = ~ pal(status),
           stroke = TRUE,
           weight = 1,
-          fillOpacity = 1,
+          fillOpacity = 0.85,
           popup = paste(
-            "Burn Status:",
-            chem_data_filtered()$status, #testing
+            "Burn Status:", chem_data_filtered()$status,
             "<br>",
-            "Site:",
-            chem_data_filtered()$Site #testing
+            "Site:", chem_data_filtered()$Site
           ),
-
-          options = pathOptions(pane = "burn")
+          group = "Burn Status"
         )
 
   })
   
 
-  #this is throwing an error, trying without the mutate
-  #df <- reactiveVal(chem_data %>% mutate(key = 1:nrow(.)))
-  df <- reactiveVal(chem_data)
+  df <- reactiveVal(chem_data %>% mutate(key = 1:nrow(.)))
+
   combined <- reactiveVal(data.frame())
-  
   
   filtered_df <- reactive({
     res <- df() %>% filter(dates >= input$daterange[1] & dates <= input$daterange[2])
+    res
+    
     
   })
   
   
   observeEvent(input$map_marker_click, {
     
-    combined(
-      bind_rows(combined(),
-                df() %>%
-                  filter(Site %in% input$map_marker_click)) 
-      
-    )
+    print(input$map_marker_click)
+    
+    combined(chem_data_filtered() %>%
+      filter(Site == input$map_marker_click$id))
+    
+    # combined(
+    #   bind_rows(combined(),
+    #             #df() %>%
+    #             chem_data_filtered() %>% 
+    #               filter(Site == input$map_marker_click$id)) 
+    #   
+    # )
   })
   
   observeEvent(input$table_rows_selected, {
-    
+
     tableSelected <- sites[input$table_rows_selected,]
-    
-    combined(bind_rows(combined(),
-                       filtered_df() %>% 
-                         filter(Site %in% tableSelected$Site)))
+
+    combined(
+      #bind_rows(combined(),
+                       filtered_df() %>%
+                         filter(Site %in% tableSelected$Site))
   })
 
   final_df <- reactive({
@@ -322,104 +334,87 @@ server <- function(input, output, session){
     })
   
   # Plots -------
-  # Question for Caitlin - which structure to use? ---------
   ##### Select 1 #####
   output$select1 <- renderPlotly({
-    
-    
-    if(nrow(combined()) == 0)
-      return(NULL)
-    
-    if(input$select1Var == "Turbidity"){
-      
-      plotly::plot_ly() %>%
-        add_bars(x = final_df()$dates, y = final_df()$select1Choice, name = ~ final_df()$Site,
-                 color = ~ final_df()$Site) %>%
-        plotly::layout(yaxis = list(title = "Turbidity (NTU)", autorange = "reversed"),
-                       xaxis = list(range = c(input$range[1], input$range[2]),
-                                    showgrid = TRUE),
-                       showlegend = TRUE,
-                       legend = list(orientation = "h", x = 0.01, y = 1.4))
-    }else {
-      
-      plot_ly(final_df()) %>%
-        add_trace(x = final_df()$dates,
-                  y = final_df()$select1Choice,
-                  name = ~ final_df()$Site,
-                  linetype = ~ final_df()$Site,
-                  mode = "lines+markers") %>%
-        plotly::layout(yaxis = list(title = paste(input$select1Var, "(mg/L)"), range = list(0, max(final_df()$select1Choice))),
-                       xaxis = list(range = c(input$range[1], input$range[2]),
-                                    showgrid = T),
-                       showlegend = TRUE,
-                       legend = list(orientation = "h", x = 0.01, y = 1.2))
-      
-      
-    }
-    }
-    )
-  
-  ##### Select 2 ####
-  output$select2 <- renderPlotly({
     
     if(nrow(combined()) == 0)
       return(NULL)
     
     plot_ly(final_df()) %>%
-      add_trace(x = final_df()$Date,
-                y = final_df()$select2Choice,
+      add_trace(x = final_df()$dates,
+                y = final_df()$select1Choice,
                 name = ~ final_df()$Site,
                 linetype = ~ final_df()$Site,
-                mode = "lines+markers") %>%
-      plotly::layout(yaxis = list(title = paste(input$select2Var), range = list(0, max(final_df()$select2Choice))),
-                     xaxis = list(range = c(input$range[1], input$range[2]),
+                mode = 'lines+markers') %>%
+      plotly::layout(yaxis = list(title = paste(input$select1Var)),
+                     xaxis = list(range = c(input$daterange[1], input$daterange[2]),
                                   showgrid = T),
                      showlegend = TRUE,
                      legend = list(orientation = "h", x = 0.01, y = 1.2))
   })
   
-  ##### Select 3 ####
-  output$select3 <- renderPlotly({
-    
-    
+  
+  # ##### Select 2 ####
+  output$select2 <- renderPlotly({
+
     if(nrow(combined()) == 0)
       return(NULL)
-    
-    
+
     plot_ly(final_df()) %>%
-      add_trace(x = final_df()$Date,
+      add_trace(x = final_df()$dates,
+                y = final_df()$select2Choice,
+                name = ~ final_df()$Site,
+                linetype = ~ final_df()$Site,
+                mode = "lines+markers") %>%
+      plotly::layout(yaxis = list(title = paste(input$select2Var)),
+                     xaxis = list(range = c(input$daterange[1], input$daterange[2]),
+                                  showgrid = T),
+                     showlegend = TRUE,
+                     legend = list(orientation = "h", x = 0.01, y = 1.2))
+  })
+
+  ##### Select 3 ####
+  output$select3 <- renderPlotly({
+
+
+    if(nrow(combined()) == 0)
+      return(NULL)
+
+
+    plot_ly(final_df()) %>%
+      add_trace(x = final_df()$dates,
                 y = final_df()$select3Choice,
                 name = ~final_df()$Site,
                 linetype = ~ final_df()$Site,
                 mode = "lines+markers") %>%
       plotly::layout(yaxis = list(title = input$select3Var),
-                     xaxis = list(range = c(input$range[1], input$range[2]),
+                     xaxis = list(range = c(input$daterange[1], input$daterange[2]),
                                   showgrid = T),
                      showlegend = TRUE,
                      legend = list(orientation = "h", x = 0.01, y = 1.2))
   })
-  
+
   ##### Select 4 ####
   output$select4 <- renderPlotly({
-    
+
     if(nrow(combined()) == 0)
       return(NULL)
-    
+
     if(!(input$select4Var %in% names(combined())))
       return(NULL)
-    
+
     plotly::plot_ly(final_df()) %>%
-      add_trace(x = final_df()$Date,
+      add_trace(x = final_df()$dates,
                 y = final_df()$select4Choice,
                 name = ~final_df()$Site,
                 mode = 'lines+markers',
                 linetype = ~ final_df()$Site,
                 connectgaps = TRUE) %>%
       plotly::layout(yaxis = list(title = input$select4Var),
-                     xaxis = list(range = c(input$range[1], input$range[2]),
+                     xaxis = list(range = c(input$daterange[1], input$daterange[2]),
                                   showgrid = T),
                      showlegend = TRUE,
-                     legend = list(orientation = "h", 
+                     legend = list(orientation = "h",
                                    x = 0.01, y = 1.2))
   })
   
