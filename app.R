@@ -10,7 +10,6 @@ library(readr)
 library(sf)
 library(shinyWidgets)
 library(stringr)
-# options(warn = 1)
 
 chem_data <- readRDS("data/tidyResChem.RDS")
 sites <- readRDS("data/sites_table.RDS")
@@ -22,6 +21,16 @@ chem_vals <-  c("Turbidity", "TSS", "ChlA", "DOC", "DTN", "pH",
 # ui -------------------------------
 ui <- fluidPage(
   #insert theme here
+  theme = bslib::bs_theme(
+    bootswatch = "flatly",
+    version = 4,
+    #bg = "#FFFFFF",
+    #fg = "#000",
+    primary = "#1E4D2B",
+    secondary = "#D9782D",
+    success = "#f28e35",
+    base_font = font_google("Cairo")
+  ),
   
   fluidRow(
   column(
@@ -127,7 +136,8 @@ ui <- fluidPage(
                 selectInput(
                   inputId = "select2Var", #tempVar
                   label = "Selection 2",
-                  choices = all_of(chem_vals)
+                  choices = all_of(chem_vals),
+                  selected = "TSS"
                 ),
                 ## Output: plot 2nd variable selected---------
                 plotlyOutput("select2", width = "100%", height = 190),
@@ -136,7 +146,8 @@ ui <- fluidPage(
                 selectInput(
                   inputId = "select3Var", #streamVar
                   label = "Selection 3",
-                  choices = all_of(chem_vals)
+                  choices = all_of(chem_vals),
+                  selected = "ChlA"
                 ),
                 ##Output: plot 3rd variable --------
                 plotlyOutput("select3", width = "100%", height = 190),
@@ -146,7 +157,8 @@ ui <- fluidPage(
                 selectInput(
                   inputId = "select4Var", #qual
                   label = "Selection 4",
-                  choices = all_of(chem_vals)
+                  choices = all_of(chem_vals),
+                  selected = "DOC"
                 ),
                 ##Output: plot 4th variable-----
                 plotlyOutput("select4", width = "100%", height = 190),
