@@ -1,7 +1,7 @@
 #load in packages
 source("setup.R")
 
-res_chem <- read.csv("prepped_reservoir_chemistry.csv")
+res_chem <- read.csv("data/prepped_reservoir_chemistry.csv")
 
 # Creating tidyResChem -------------------
 
@@ -32,6 +32,8 @@ tidyResChemMerge <- left_join(tidyResChem, latLong, multiple = "first")
 
 # Creating sites_table -----------------------
 ## Caitlin way for sites_table -----------
+
+#check w Caitlin about this!!! -------
 data_avail_chem <- resChemNA %>% group_by(Site) %>% 
   summarise(across(c("Turbidity","TSS", "ChlA", "DOC", "DTN", "pH", "ANC","SC", 
                      "Na",  "NH4", "K", "Mg",  "Ca",  "F", "Cl", "NO3", "PO4","SO4"),

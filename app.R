@@ -14,9 +14,11 @@ library(stringr)
 chem_data <- readRDS("data/tidyResChem.RDS")
 sites <- readRDS("data/sites_table.RDS")
 
-chem_vals <-  c("Turbidity", "TSS", "ChlA", "DOC", "DTN", "pH",
-  "ANC", "SC", "Na", "NH4", "K", "Mg", "Ca", "F",
-  "Cl", "NO3", "PO4", "SO4")
+chem_vals <-  c("Turbidity", "TSS (Total Suspended Solids)", "ChlA (Chlorophyll-a)", 
+                "DOC (Dissolved Organic Carbon)", "DTN (Dissolved Total Nitrogen)", 
+                "pH", "ANC (Acid Neutralizing Capacity)", "SC (Specific Conductance)", 
+                "Na", "NH4", "K", "Mg", "Ca", "F",
+                "Cl", "NO3", "PO4", "SO4")
 
 # ui -------------------------------
 ui <- fluidPage(
@@ -36,7 +38,7 @@ ui <- fluidPage(
   column(
     5,
     # Application title
-    titlePanel("Cameron Peak Burn Area - Poudre Lake Chemistry"),
+    titlePanel("Water Quality of Poudre Lakes - Cameron Peak Burn Area"),
     
     # Add some informational text using and HTML tag (i.e., a level 5 heading)
     h5(
@@ -265,10 +267,9 @@ server <- function(input, output, session){
     
     
     tableProxy <- DT::dataTableProxy("table")
-    
+  
+    # # formatting map ------  
      observe({
- 
-# # formatting map ------
 
       leafletProxy("map") %>%
         clearMarkers() %>%
@@ -310,8 +311,13 @@ server <- function(input, output, session){
     
     print(input$map_marker_click)
     
-    combined(chem_data_filtered() %>%
-      filter(Site == input$map_marker_click$id))
+    # combined(chem_data_filtered() %>%
+    #   filter(Site == input$map_marker_click$id))
+    
+    combined(
+      filtered_df() %>% 
+        filter(Site %in% input$map_marker_click)
+    )
     
     # combined(
     #   bind_rows(combined(),
